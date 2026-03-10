@@ -107,7 +107,7 @@ All VMs are assigned static IPs on the local network. DNS is managed via Cloudfl
 - [ ] Restrict Grafana — lock down public access via Nginx auth
 - [ ] Nextcloud + ONLYOFFICE — self-hosted document editing
 - [ ] Syncthing — connect mobile device
-- [ ] Hardware upgrade — Ryzen 5600G + B550 Mini-ITX + 32GB DDR4 (~$475–490 USD)
+- [ ] Hardware upgrade — Ryzen 5600G + B550 Mini-ITX + 32GB DDR4
 
 ---
 
