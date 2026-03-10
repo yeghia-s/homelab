@@ -7,29 +7,12 @@ ComponentDetailsCaseHP Pavilion h8 TowerCPUAMD FX-8350 Eight-Core @ 4.0GHz (AM3+
 Platform notes: DDR3 only, no ECC support, limited IOMMU capability. Planning upgrade to Ryzen 5600G + B550 Mini-ITX platform in ~1 year for proper IOMMU passthrough, DDR4, and significantly lower power draw (65W vs 125W TDP).
 
 
-Stack Overview
-┌─────────────────────────────────────────┐
-│           Proxmox 9.1 (bare metal)      │
-│                                         │
-│  ┌──────────────┐  ┌─────────────────┐  │
-│  │ TrueNAS SCALE│  │  Ubuntu Monitor │  │
-│  │     VM       │  │       VM        │  │
-│  │              │  │                 │  │
-│  │ - Jellyfin   │  │ - Prometheus    │  │
-│  │ - Calibre-Web│  │ - Grafana       │  │
-│  │ - Syncthing  │  │ - node-exporter │  │
-│  │ - Transmission│  │ - SMTP alerts   │  │
-│  │ - node-exporter│ └─────────────────┘  │
-│  └──────────────┘                       │
-│                                         │
-│  ┌──────────────┐                       │
-│  │  Debian Nginx│                       │
-│  │     VM       │                       │
-│  │              │                       │
-│  │ - Nginx      │                       │
-│  │ - Certbot    │                       │
-│  └──────────────┘                       │
-└─────────────────────────────────────────┘
+## Stack Overview
+
+**Proxmox 9.1** (bare metal)
+- **TrueNAS SCALE VM** — Jellyfin, Calibre-Web, Syncthing, Transmission, node-exporter
+- **Ubuntu Monitoring VM** — Prometheus, Grafana, node-exporter, SMTP alerts
+- **Debian Nginx VM** — Nginx, Certbot (reverse proxy + SSL)
 
 Services
 Proxmox 9.1
@@ -86,7 +69,7 @@ Roadmap
  Restrict Grafana — lock down public access via Nginx auth
  Nextcloud + ONLYOFFICE — self-hosted document editing
  Syncthing — connect mobile device
- Hardware upgrade — Ryzen 5600G + B550 Mini-ITX + 32GB DDR4 (~$475–490 USD)
+ Hardware upgrade — Ryzen 5600G + B550 Mini-ITX + 32GB DDR4
 
 
 Related
