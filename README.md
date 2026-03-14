@@ -16,7 +16,7 @@ A self-hosted infrastructure project running on a repurposed HP Pavilion h8 towe
 
 ---
 
-All three VMs are codified with Terraform using the [bpg/proxmox](https://registry.terraform.io/providers/bpg/proxmox/latest/docs) provider. See [`terraform/`](./terraform/).
+All VMs are codified with Terraform using the [bpg/proxmox](https://registry.terraform.io/providers/bpg/proxmox/latest/docs) provider. See [`terraform/`](./terraform/).
 
 ---
 
@@ -26,7 +26,9 @@ All three VMs are codified with Terraform using the [bpg/proxmox](https://regist
 
 NAS VM with 32GB virtual boot disk. The 12TB HDD is passed through using its stable disk ID rather than `/dev/sdX` to ensure consistent assignment across reboots. ZFS pool `tank` auto-imported on setup with all data intact.
 
-**Running apps:** Jellyfin · Calibre-Web · Syncthing · Transmission · node-exporter
+**Running apps:** Jellyfin · Calibre-Web · Syncthing · Transmission · node-exporter · MinIO
+
+> MinIO on TrueNAS serves as the S3-compatible remote backend for Terraform state storage (`terraform-state` bucket).
 
 ---
 
@@ -40,7 +42,21 @@ Prometheus scrapes metrics from the monitoring VM and TrueNAS via node-exporter.
 
 ### Debian Nginx VM
 
-Reverse proxy with SSL termination via Certbot. Routes external HTTPS traffic to Jellyfin, Grafana, and Calibre-Web. DNS managed via Cloudflare wildcard records.
+Reverse proxy with SSL termination via Certbot. Routes external HTTPS traffic to internal services. DNS managed via Cloudflare.
+
+**Proxied services:** Jellyfin · Grafana · Calibre-Web · Navidrome · Stoat (Revolt)
+
+---
+
+### Debian Community VM
+
+Dedicated VM for community and communication services. Runs Docker Compose stacks for Stoat and Mumble.
+
+**Stoat (self-hosted Revolt)** — Discord-like chat platform accessible at `chat.armstream.stream`. Deployed via the official [stoatchat/self-hosted](https://github.com/stoatchat/self-hosted) repo. Includes text channels, DMs, file sharing, roles, and voice via LiveKit.
+
+> Workarounds applied for AMD FX-8350 (no AVX support): MongoDB pinned to 4.4, Redis overridden to `redis:7-alpine` in `compose.override.yml`.
+
+**Mumble** — Low-latency voice server. Deployed as a separate Docker Compose stack. DNS record is grey-cloud (DNS only) to allow raw TCP/UDP passthrough.
 
 ---
 
@@ -49,10 +65,18 @@ Reverse proxy with SSL termination via Certbot. Routes external HTTPS traffic to
 All VMs are managed with Terraform. The `terraform/` directory contains:
 ```
 terraform/
+├── backend.tf        # S3 remote state backend (MinIO on TrueNAS)
 ├── providers.tf      # bpg/proxmox provider
-├── variables.tf      # endpoint + API token variables
+├── variables.tf      # endpoint, API token, SSH key variables
 ├── vms.tf            # VM resource definitions
 └── terraform.tfvars  # gitignored — secrets only
+```
+
+Terraform state is stored remotely in MinIO on TrueNAS. Credentials are passed via environment variables:
+
+```bash
+export AWS_ACCESS_KEY_ID="..."
+export AWS_SECRET_ACCESS_KEY="..."
 ```
 
 To initialize:
@@ -61,6 +85,8 @@ cd terraform
 terraform init
 terraform plan
 ```
+
+A Debian 13 cloud-init template (VM ID 9000) is used as the base for cloned VMs. Created manually on the Proxmox host using the official Debian genericcloud image.
 
 ---
 
@@ -71,12 +97,18 @@ terraform plan
 - [x] Prometheus + Grafana monitoring
 - [x] Nginx reverse proxy with SSL
 - [x] Terraform — all VMs codified with IaC
+- [x] Terraform remote state backend via MinIO on TrueNAS
+- [x] Debian 13 cloud-init template for VM provisioning
+- [x] Stoat (self-hosted Revolt) — community chat
+- [x] Mumble — voice server
+- [x] Hardware upgrade — Ryzen 5600G + B550 Mini-ITX + 32GB DDR4
 - [ ] Restrict Grafana behind Nginx auth
 - [ ] Nextcloud + ONLYOFFICE
-- [ ] Hardware upgrade — Ryzen 5600G + B550 Mini-ITX + 32GB DDR4
+- [ ] Jellyfin music bot for Stoat
 
 ---
 
 ## Related
 
 - [NixOS config](https://github.com/yeghia-s/nixos-config)
+
