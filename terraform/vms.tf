@@ -120,3 +120,61 @@ resource "proxmox_virtual_environment_vm" "nginx" {
     firewall    = true
   }
 }
+
+resource "proxmox_virtual_environment_vm" "community_vm" {
+  name      = "community"
+  node_name = "proxmox"
+  vm_id     = 103
+  started   = true
+  on_boot   = true
+
+  clone {
+    vm_id = 9000
+    full  = true
+  }
+
+  cpu {
+    cores   = 2
+    sockets = 1
+    type    = "x86-64-v2-AES"
+  }
+
+  memory {
+    dedicated = 4096
+  }
+
+  disk {
+    datastore_id = "local-lvm"
+    interface    = "scsi0"
+    size         = 32
+  }
+
+  network_device {
+    bridge = "vmbr0"
+    model  = "virtio"
+  }
+
+  initialization {
+    ip_config {
+      ipv4 {
+        address = "10.0.0.160/24"
+        gateway = "10.0.0.1"
+      }
+    }
+    dns {
+      servers = ["1.1.1.1", "8.8.8.8"]
+    }
+    user_account {
+      username = "yeghia"
+      keys     =  [var.ssh_public_key]
+    }
+  }
+
+  operating_system {
+    type = "l26"
+  }
+
+  agent {
+    enabled = true
+  }
+}
