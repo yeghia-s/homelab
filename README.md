@@ -110,7 +110,6 @@ A Debian 13 cloud-init template (VM ID 9000) is used as the base for cloned VMs.
 - [x] open.mp game server — custom RPG gamemode
 - [ ] Restrict Grafana behind Nginx auth
 - [ ] Nextcloud + ONLYOFFICE
-- [ ] Jellyfin music bot for Stoat
 - [ ] open.mp — NPC bots and expanded RPG features
 
 ---
