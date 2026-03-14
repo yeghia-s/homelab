@@ -178,3 +178,61 @@ resource "proxmox_virtual_environment_vm" "community_vm" {
     enabled = true
   }
 }
+
+resource "proxmox_virtual_environment_vm" "omp" {
+  name      = "omp"
+  node_name = "proxmox"
+  vm_id     = 104
+  started   = true
+  on_boot   = true
+
+  clone {
+    vm_id = 9000
+    full  = true
+  }
+
+  cpu {
+    cores   = 2
+    sockets = 1
+    type    = "x86-64-v2-AES"
+  }
+
+  memory {
+    dedicated = 2048
+  }
+
+  disk {
+    datastore_id = "local-lvm"
+    interface    = "scsi0"
+    size         = 20
+  }
+
+  network_device {
+    bridge = "vmbr0"
+    model  = "virtio"
+  }
+
+  initialization {
+    ip_config {
+      ipv4 {
+        address = "10.0.0.161/24"
+        gateway = "10.0.0.1"
+      }
+    }
+    dns {
+      servers = ["1.1.1.1", "8.8.8.8"]
+    }
+    user_account {
+      username = "yeghia"
+      keys     = [var.ssh_public_key]
+    }
+  }
+
+  operating_system {
+    type = "l26"
+  }
+
+  agent {
+    enabled = true
+  }
+}

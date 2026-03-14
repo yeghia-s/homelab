@@ -60,6 +60,12 @@ Dedicated VM for community and communication services. Runs Docker Compose stack
 
 ---
 
+### Debian open.mp VM
+
+Dedicated VM for a self-hosted [open.mp](https://open.mp) (GTA San Andreas multiplayer) game server. Runs a custom RPG gamemode built on Pawn with sscanf and streamer components. Managed as a systemd service.
+
+---
+
 ## Infrastructure as Code
 
 All VMs are managed with Terraform. The `terraform/` directory contains:
@@ -73,7 +79,6 @@ terraform/
 ```
 
 Terraform state is stored remotely in MinIO on TrueNAS. Credentials are passed via environment variables:
-
 ```bash
 export AWS_ACCESS_KEY_ID="..."
 export AWS_SECRET_ACCESS_KEY="..."
@@ -102,13 +107,14 @@ A Debian 13 cloud-init template (VM ID 9000) is used as the base for cloned VMs.
 - [x] Stoat (self-hosted Revolt) — community chat
 - [x] Mumble — voice server
 - [x] Hardware upgrade — Ryzen 5600G + B550 Mini-ITX + 32GB DDR4
+- [x] open.mp game server — custom RPG gamemode
 - [ ] Restrict Grafana behind Nginx auth
 - [ ] Nextcloud + ONLYOFFICE
 - [ ] Jellyfin music bot for Stoat
+- [ ] open.mp — NPC bots and expanded RPG features
 
 ---
 
 ## Related
 
 - [NixOS config](https://github.com/yeghia-s/nixos-config)
-
