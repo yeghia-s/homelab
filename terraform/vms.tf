@@ -21,7 +21,7 @@ resource "proxmox_virtual_environment_vm" "truenas" {
   }
 
   memory {
-    dedicated = 8192
+    dedicated = 12288
   }
 
   disk {
@@ -36,6 +36,10 @@ resource "proxmox_virtual_environment_vm" "truenas" {
     model       = "virtio"
     mac_address = "BC:24:11:12:1B:43"
     firewall    = true
+  }
+
+  agent {
+    enabled = true
   }
 }
 
@@ -62,7 +66,7 @@ resource "proxmox_virtual_environment_vm" "monitoring" {
   }
 
   memory {
-    dedicated = 4096
+    dedicated = 2048
   }
 
   disk {
@@ -77,6 +81,10 @@ resource "proxmox_virtual_environment_vm" "monitoring" {
     model       = "virtio"
     mac_address = "BC:24:11:40:AC:B1"
     firewall    = true
+  }
+
+  agent {
+    enabled = true
   }
 }
 
@@ -118,6 +126,10 @@ resource "proxmox_virtual_environment_vm" "nginx" {
     model       = "virtio"
     mac_address = "BC:24:11:BD:9C:64"
     firewall    = true
+  }
+
+  agent {
+    enabled = true
   }
 }
 
@@ -233,6 +245,6 @@ resource "proxmox_virtual_environment_vm" "omp" {
   }
 
   agent {
-    enabled = true
+    enabled = true 
   }
 }
