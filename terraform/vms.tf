@@ -178,7 +178,7 @@ resource "proxmox_virtual_environment_vm" "community_vm" {
     }
     user_account {
       username = "yeghia"
-      keys     =  [var.ssh_public_key]
+      keys = var.ssh_public_keys
     }
   }
 
@@ -236,7 +236,7 @@ resource "proxmox_virtual_environment_vm" "omp" {
     }
     user_account {
       username = "yeghia"
-      keys     = [var.ssh_public_key]
+      keys = var.ssh_public_keys
     }
   }
 
