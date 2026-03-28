@@ -11,4 +11,9 @@ provider "proxmox" {
   endpoint = var.proxmox_endpoint
   api_token = var.proxmox_api_token
   insecure  = true  # set false if you have a valid TLS cert
+
+  ssh {
+    agent    = true
+    username = "root"
+  }
 }
