@@ -4,3 +4,7 @@
 terraform.tfstate
 terraform.tfstate.backup
 *.tfvars
+*.tfstate
+*.tfstate.*
+errored.tfstate
+.terraform/
