@@ -39,15 +39,16 @@ All VMs are assigned static IPs on the `10.0.0.0/24` subnet. DNS is managed via 
 ## Virtual Machines
 
 | VM ID | Name | IP | Description |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 100 | TrueNAS | `10.0.0.143` | NAS — ZFS pool, file storage, MinIO S3, rclone backups |
 | 101 | Monitoring | `10.0.0.238` | Prometheus + Grafana + node-exporter |
 | 102 | Nginx | `10.0.0.251` | Reverse proxy + SSL termination for all services |
 | 103 | Community | `10.0.0.160` | Stoat (Revolt), Mumble, LiveKit voice/video |
 | 104 | OMP | `10.0.0.161` | open.mp GTA:SA multiplayer server (RPG gamemode) |
-| 105 | DokuWiki | `10.0.0.162` | [wiki.hyetechnology.org](https://wiki.hyetechnology.org) — Armenian tech community wiki |
+| 105 | DokuWiki | `10.0.0.162` | [hyetechnology.org](https://hyetechnology.org) — Armenian tech community wiki |
 | 106 | Nairi Café | `10.0.0.163` | [nairicafe.com](https://nairicafe.com) — e-commerce storefront |
 | 107 | Ghost | `10.0.0.164` | [yeghiasargis.com](https://yeghiasargis.com) — personal blog |
+| 108 | Nextcloud | `10.0.0.165` | Self-hosted Google Workspace replacement — files, calendar, contacts, documents |
 
 ---
 
@@ -58,18 +59,20 @@ All VMs are assigned static IPs on the `10.0.0.0/24` subnet. DNS is managed via 
 NAS VM with the 12TB HDD passed through via stable disk ID. ZFS pool `tank` auto-imported on setup.
 
 **Hosted apps:**
-- Jellyfin — media server
-- Navidrome — self-hosted music streaming
-- Calibre-Web — ebook library with Kobo Sage sync
-- Immich — self-hosted photo library (migrated from Google Photos, ~12,000 assets) at `photos.armstream.stream`
-- Syncthing — file sync
-- Transmission — torrent client
-- MinIO — S3-compatible object storage (Terraform remote state backend)
-- node-exporter — metrics
+
+* Jellyfin — media server
+* Navidrome — self-hosted music streaming
+* Calibre-Web — ebook library with Kobo Sage sync
+* Immich — self-hosted photo library (migrated from Google Photos, ~12,000 assets) at `photos.armstream.stream`
+* Syncthing — file sync
+* Transmission — torrent client
+* MinIO — S3-compatible object storage (Terraform remote state backend)
+* node-exporter — metrics
 
 **Backups:**
-- rclone to Google Drive, Dropbox, and Cloudflare R2 (three destinations)
-- TrueNAS periodic snapshots
+
+* rclone to Google Drive, Dropbox, and Cloudflare R2 (three destinations)
+* TrueNAS periodic snapshots
 
 ---
 
@@ -80,10 +83,11 @@ Prometheus + Grafana stack. Scrapes metrics from all VMs via node-exporter.
 **Grafana dashboard:** Node Exporter Full (ID 1860)
 
 **Alert rules:**
-- High Disk — usage > 90%
-- High RAM — usage > 95%
-- High CPU — usage > 95%
-- Host Down — `up == 0`
+
+* High Disk — usage > 90%
+* High RAM — usage > 95%
+* High CPU — usage > 95%
+* Host Down — `up == 0`
 
 Alerts delivered via SMTP.
 
@@ -94,17 +98,20 @@ Alerts delivered via SMTP.
 Nginx with Certbot SSL termination. Routes all external HTTPS traffic to internal services.
 
 **Proxied services (armstream.stream subdomains):**
-- `photos.armstream.stream` → Immich
-- `calendar.armstream.stream` → Baïkal (CalDAV/CardDAV)
-- `chat.armstream.stream` → Stoat
-- `navidrome.armstream.stream` → Navidrome
-- `calibre.armstream.stream` → Calibre-Web
-- `jellyfin.armstream.stream` → Jellyfin
+
+* `photos.armstream.stream` → Immich
+* `cloud.armstream.stream` → Nextcloud
+* `onlyoffice.armstream.stream` → OnlyOffice document server
+* `chat.armstream.stream` → Stoat
+* `navidrome.armstream.stream` → Navidrome
+* `calibre.armstream.stream` → Calibre-Web
+* `jellyfin.armstream.stream` → Jellyfin
 
 **Proxied services (external domains):**
-- `yeghiasargis.com` → Ghost (VM 107)
-- `hyetechnology.org` → DokuWiki (VM 105)
-- `nairicafe.com` → e-commerce (VM 106)
+
+* `yeghiasargis.com` → Ghost (VM 107)
+* `hyetechnology.org` → DokuWiki (VM 105)
+* `nairicafe.com` → e-commerce (VM 106)
 
 ---
 
@@ -112,10 +119,10 @@ Nginx with Certbot SSL termination. Routes all external HTTPS traffic to interna
 
 Self-hosted community infrastructure for the Armenian tech community (armstream.stream).
 
-- **Stoat** (rebranded Revolt) — self-hosted chat at `chat.armstream.stream`
-- **LiveKit** — voice/video conferencing backend for Stoat
-- **Mumble** — low-latency voice server
-- **Mumble music bot** — custom Python bot (pymumble + yt-dlp + ffmpeg)
+* **Stoat** (rebranded Revolt) — self-hosted chat at `chat.armstream.stream`
+* **LiveKit** — voice/video conferencing backend for Stoat
+* **Mumble** — low-latency voice server
+* **Mumble music bot** — custom Python bot (pymumble + yt-dlp + ffmpeg)
 
 ---
 
@@ -123,38 +130,48 @@ Self-hosted community infrastructure for the Armenian tech community (armstream.
 
 open.mp (SA-MP successor) game server running a custom RPG gamemode.
 
-- MySQL backend for persistent player data
-- Account system (register/login)
-- Class selection
-- Economy commands
+* MySQL backend for persistent player data
+* Account system (register/login)
+* Class selection
+* Economy commands
 
 ---
 
-### DokuWiki — VM 105
+### DokuWiki — VM 105 (`10.0.0.162`)
 
 [hyetechnology.org](https://hyetechnology.org) — an Armenian tech community knowledge base and wiki. Provisioned via Terraform.
 
 ---
 
-### Nairi Café — VM 106
+### Nairi Café — VM 106 (`10.0.0.163`)
 
 [nairicafe.com](https://nairicafe.com) — e-commerce storefront. Provisioned via Terraform.
 
 ---
 
-### Ghost — VM 107
+### Ghost — VM 107 (`10.0.0.164`)
 
 [yeghiasargis.com](https://yeghiasargis.com) — personal blog covering self-hosted infrastructure, Linux, and humanistic essays. Provisioned via Terraform.
 
 ---
 
-## CalDAV / CardDAV
+### Nextcloud — VM 108 (`10.0.0.165`)
 
-**Baïkal** self-hosted CalDAV server at `calendar.armstream.stream`.
+Self-hosted Google Workspace replacement at `cloud.armstream.stream`. Deployed via Docker Compose with Nextcloud, Postgres, Redis, and OnlyOffice. Data directory mounted from TrueNAS via NFS (`tank/nextcloud`).
 
-- Integrated with **khal** + **vdirsyncer** on NixOS
-- Secrets managed via **sops-nix**
-- Recovered from data loss incident via TrueNAS snapshot backup
+**Apps enabled:**
+
+* Calendar — CalDAV server, replaces Baïkal
+* Contacts — CardDAV server
+* OnlyOffice — document editing at `onlyoffice.armstream.stream`
+* Tasks
+* Notes
+
+**Integrations:**
+
+* DAVx5 on GrapheneOS for native calendar/contacts sync
+* vdirsyncer + khal on NixOS for desktop calendar sync
+* Secrets managed via sops-nix
 
 ---
 
@@ -162,21 +179,21 @@ open.mp (SA-MP successor) game server running a custom RPG gamemode.
 
 All VMs are defined in Terraform using the **bpg/proxmox** provider.
 
-- Remote state stored in **MinIO S3** on TrueNAS (`tank`)
-- Secrets passed via environment variables (`TF_VAR_*`) — never committed
-- `.tfvars` and credential files excluded via `.gitignore`
+* Remote state stored in **MinIO S3** on TrueNAS (`tank`)
+* Secrets passed via environment variables (`TF_VAR_*`) — never committed
+* `.tfvars` and credential files excluded via `.gitignore`
 
 ---
 
 ## Roadmap
 
-- [ ] Nextcloud — self-hosted file sync and document editing
-- [ ] Hardware upgrade — Ryzen 5600G + B550 Mini-ITX + 32GB DDR4
-- [ ] GNOME/KDE translation contributions for Armenian locale (hyetechnology.org initiative)
+* ~~Nextcloud — self-hosted file sync and document editing~~ ✓
+* Hardware upgrade — Ryzen 5600G + B550 Mini-ITX + 32GB DDR4
+* GNOME/KDE translation contributions for Armenian locale (hyetechnology.org initiative)
 
 ---
 
 ## Related
 
-- [NixOS config](https://github.com/yeghia-s/nixos-config)
-- [Neovim config](https://github.com/yeghia-s/nvim-config)
+* [NixOS config](https://github.com/yeghia-s/nixos-config)
+* [Neovim config](https://github.com/yeghia-s/nvim-config)
