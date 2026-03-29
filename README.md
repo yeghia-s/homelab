@@ -48,7 +48,6 @@ All VMs are assigned static IPs on the `10.0.0.0/24` subnet. DNS is managed via 
 | 105 | DokuWiki | `10.0.0.162` | [hyetechnology.org](https://hyetechnology.org) — Armenian tech community wiki |
 | 106 | Nairi Café | `10.0.0.163` | [nairicafe.com](https://nairicafe.com) — e-commerce storefront |
 | 107 | Ghost | `10.0.0.164` | [yeghiasargis.com](https://yeghiasargis.com) — personal blog |
-| 108 | Nextcloud | `10.0.0.165` | Self-hosted Google Workspace replacement — files, calendar, contacts, documents |
 
 ---
 
@@ -100,7 +99,6 @@ Nginx with Certbot SSL termination. Routes all external HTTPS traffic to interna
 **Proxied services (armstream.stream subdomains):**
 
 * `photos.armstream.stream` → Immich
-* `cloud.armstream.stream` → Nextcloud
 * `onlyoffice.armstream.stream` → OnlyOffice document server
 * `chat.armstream.stream` → Stoat
 * `navidrome.armstream.stream` → Navidrome
@@ -155,26 +153,6 @@ open.mp (SA-MP successor) game server running a custom RPG gamemode.
 
 ---
 
-### Nextcloud — VM 108 (`10.0.0.165`)
-
-Self-hosted Google Workspace replacement at `cloud.armstream.stream`. Deployed via Docker Compose with Nextcloud, Postgres, Redis, and OnlyOffice. Data directory mounted from TrueNAS via NFS (`tank/nextcloud`).
-
-**Apps enabled:**
-
-* Calendar — CalDAV server, replaces Baïkal
-* Contacts — CardDAV server
-* OnlyOffice — document editing at `onlyoffice.armstream.stream`
-* Tasks
-* Notes
-
-**Integrations:**
-
-* DAVx5 on GrapheneOS for native calendar/contacts sync
-* vdirsyncer + khal on NixOS for desktop calendar sync
-* Secrets managed via sops-nix
-
----
-
 ## Infrastructure as Code
 
 All VMs are defined in Terraform using the **bpg/proxmox** provider.
@@ -187,9 +165,7 @@ All VMs are defined in Terraform using the **bpg/proxmox** provider.
 
 ## Roadmap
 
-* ~~Nextcloud — self-hosted file sync and document editing~~ ✓
 * Hardware upgrade — Ryzen 5600G + B550 Mini-ITX + 32GB DDR4
-* GNOME/KDE translation contributions for Armenian locale (hyetechnology.org initiative)
 
 ---
 
