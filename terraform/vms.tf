@@ -434,3 +434,65 @@ resource "proxmox_virtual_environment_vm" "ghost" {
     ignore_changes = [disk, cdrom]
   }
 }
+
+resource "proxmox_virtual_environment_vm" "gitea" {
+  name      = "gitea"
+  node_name = "proxmox"
+  vm_id     = 108
+  started   = true
+  on_boot   = true
+
+  clone {
+    vm_id = 9000
+    full  = true
+  }
+
+  cpu {
+    cores   = 1
+    sockets = 1
+    type    = "x86-64-v2-AES"
+  }
+
+  memory {
+    dedicated = 1024
+  }
+
+  disk {
+    datastore_id = "local-lvm"
+    interface    = "scsi0"
+    size         = 10 
+  }
+
+  network_device {
+    bridge = "vmbr0"
+    model  = "virtio"
+  }
+
+  initialization {
+    ip_config {
+      ipv4 {
+        address = "10.0.0.165/24"
+        gateway = "10.0.0.2"
+      }
+    }
+    dns {
+      servers = ["1.1.1.1", "8.8.8.8"]
+    }
+    user_account {
+      username = "yeghia"
+      keys     = var.ssh_public_keys
+    }
+  }
+
+  operating_system {
+    type = "l26"
+  }
+
+  agent {
+    enabled = true
+  }
+
+  lifecycle {
+    ignore_changes = [disk, cdrom]
+  }
+}
