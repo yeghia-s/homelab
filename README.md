@@ -1,175 +1,110 @@
 # Homelab
 
-A self-hosted infrastructure project running on a repurposed HP Pavilion h8 tower. Built to learn DevOps concepts hands-on — virtualization, storage, monitoring, reverse proxying, and infrastructure as code.
-
-All VMs are provisioned and managed via **Terraform** (bpg/proxmox provider) with **MinIO S3 remote state** stored on TrueNAS.
+A self-hosted infrastructure project running on a repurposed HP Pavilion h8 tower. Built from the ground up — bare metal installation, ZFS storage, full VM provisioning via Terraform, and a complete self-hosted service stack covering media, communications, monitoring, and community infrastructure.
 
 ---
 
 ## Hardware
 
-**Case:** HP Pavilion h8 Tower
-**CPU:** AMD FX-8350 Eight-Core @ 4.0GHz (AM3+, 125W TDP)
-**RAM:** 32GB Timetec DDR3 1600MHz (4x8GB)
-**Boot Drive:** Crucial BX500 240GB SATA SSD (Proxmox OS)
-**Storage:** 12TB HGST Ultrastar HUH721212ALE601 (ZFS pool `tank`, passed through to TrueNAS)
+| Component | Spec |
+|-----------|------|
+| **Case** | HP Pavilion h8 Tower |
+| **CPU** | AMD FX-8350 Eight-Core @ 4.0GHz (AM3+, 125W TDP) |
+| **RAM** | 32GB Timetec DDR3 1600MHz (4×8GB) |
+| **Boot Drive** | Crucial BX500 240GB SATA SSD |
+| **Storage** | 12TB HGST Ultrastar HUH721212ALE601 (ZFS pool `tank`) |
 
-> **Platform notes:** DDR3 only, no ECC support, limited IOMMU capability. Planning upgrade to Ryzen 5600G + B550 Mini-ITX platform for proper IOMMU passthrough, DDR4, and lower power draw (65W vs 125W TDP).
-
----
-
-## Network
-
-**Router:** TP-Link ER707-M2 (Rogers XB6 in bridge mode)
-**AP:** TP-Link EAP670
-**Gateway:** `10.0.0.2`
-
-All VMs are assigned static IPs on the `10.0.0.0/24` subnet. DNS is managed via **Cloudflare** with records pointing to the Nginx reverse proxy (VM 102) for external access. DDNS update script keeps `armstream.stream` in sync.
+> Planning upgrade to Ryzen 5600G + B550 Mini-ITX for proper IOMMU passthrough, DDR4, and lower power draw (~65W vs 125W TDP).
 
 ---
 
-## Stack Overview
+## Architecture
 
-**Hypervisor:** Proxmox VE 9.1 (bare metal on 240GB SSD)
-**IaC:** Terraform with bpg/proxmox provider, MinIO S3 remote state on TrueNAS
-**Reverse Proxy:** Nginx + Certbot (Let's Encrypt), Cloudflare DNS
+**Proxmox VE 9.1** runs bare metal on the SSD. All services are isolated in VMs provisioned via Terraform using the `bpg/proxmox` provider. Terraform remote state is stored in a MinIO S3 bucket on TrueNAS.
 
----
+Network routing is handled by a **TP-Link ER707-M2** (gateway `10.0.0.2`) with Wi-Fi via TP-Link EAP670 AP (Omada stack). Dynamic DNS is kept current via a Cloudflare DDNS script. All external traffic terminates at the Nginx reverse proxy with Certbot-issued SSL per subdomain.
 
-## Virtual Machines
+### VM Inventory
 
-| VM ID | Name | IP | Description |
-| --- | --- | --- | --- |
-| 100 | TrueNAS | `10.0.0.143` | NAS — ZFS pool, file storage, MinIO S3, rclone backups |
-| 101 | Monitoring | `10.0.0.238` | Prometheus + Grafana + node-exporter |
-| 102 | Nginx | `10.0.0.251` | Reverse proxy + SSL termination for all services |
-| 103 | Community | `10.0.0.160` | Stoat (Revolt), Mumble, LiveKit voice/video |
-| 104 | OMP | `10.0.0.161` | open.mp GTA:SA multiplayer server (RPG gamemode) |
-| 105 | DokuWiki | `10.0.0.162` | [hyetechnology.org](https://hyetechnology.org) — Armenian tech community wiki |
-| 106 | Nairi Café | `10.0.0.163` | [nairicafe.com](https://nairicafe.com) — e-commerce storefront |
-| 107 | Ghost | `10.0.0.164` | [yeghiasargis.com](https://yeghiasargis.com) — personal blog |
+| VM ID | Role | OS | Key Services |
+|-------|------|----|--------------|
+| 100 | NAS | TrueNAS SCALE | ZFS pool `tank`, MinIO (S3 remote state) |
+| 101 | Monitoring | Ubuntu | Prometheus, Grafana, alerting (SMTP) |
+| 102 | Reverse Proxy | Debian | Nginx, Certbot, SSL termination |
+| 103 | Community | Debian | Stoat (self-hosted Revolt), Mumble, LiveKit |
+| 104 | Game Server | Ubuntu | open.mp (GTA:SA RPG server) |
+| 105 | Wiki | Debian | DokuWiki (HyeTechWiki) |
+| 106 | E-Commerce | Debian | Nairi Café (Medusa.js v2 + custom storefront) |
+| 107 | Blog | Debian | Ghost (yeghiasargis.com) |
+| 108 | Git | Debian | Gitea (git.armstream.stream) |
 
 ---
 
 ## Services
 
-### TrueNAS SCALE 25.10.2 — VM 100
+### Storage — TrueNAS SCALE (VM 100)
+ZFS pool `tank` on the 12TB HDD, passed through via stable disk ID. Hosts MinIO for S3-compatible Terraform remote state. Also runs Jellyfin, Calibre-Web (with Kobo Sage sync), Syncthing, Navidrome, Immich (12k+ photo assets), and Transmission.
 
-NAS VM with the 12TB HDD passed through via stable disk ID. ZFS pool `tank` auto-imported on setup.
+### Monitoring — Ubuntu (VM 101)
+Prometheus scrapes node-exporter from all VMs. Grafana dashboards provide full visibility across the stack. Alert rules configured for high disk (>90%), RAM (>95%), CPU (>95%), and host-down events, delivered via SMTP.
 
-**Hosted apps:**
+### Reverse Proxy — Debian (VM 102)
+Nginx handles all inbound HTTPS traffic, routing by subdomain to internal services. SSL certificates issued per subdomain via Certbot against Cloudflare DNS.
 
-* Jellyfin — media server
-* Navidrome — self-hosted music streaming
-* Calibre-Web — ebook library with Kobo Sage sync
-* Immich — self-hosted photo library (migrated from Google Photos, ~12,000 assets) at `photos.armstream.stream`
-* Syncthing — file sync
-* Transmission — torrent client
-* MinIO — S3-compatible object storage (Terraform remote state backend)
-* node-exporter — metrics
+### Community — Debian (VM 103)
+**Stoat** (self-hosted [Revolt](https://revolt.chat)) at `chat.armstream.stream` — fully self-hosted chat platform. **LiveKit** provides voice/video (TCP 7881, UDP 50000–50100 forwarded at router). **Mumble** at `voice.armstream.stream:64738` for low-latency voice. Custom Python Mumble music bot ([mumblebot](https://github.com/yeghia-s/mumblebot)) using pymumble + yt-dlp + ffmpeg.
 
-**Backups:**
+### Game Server — Ubuntu (VM 104)
+open.mp GTA:SA RPG server with a working account system, economy, and class selection. Source: [omp-rpg](https://github.com/yeghia-s/omp-rpg).
 
-* rclone to Google Drive, Dropbox, and Cloudflare R2 (three destinations)
-* TrueNAS periodic snapshots
+### Wiki — Debian (VM 105)
+[HyeTechWiki](https://wiki.hyetechnology.org) — DokuWiki instance with Bootstrap3 theme. An Armenian-language technical wiki for Armenian developers in both the homeland and diaspora.
 
----
+### E-Commerce — Debian (VM 106)
+Nairi Café storefront — Medusa.js v2 backend with a custom frontend and Stripe payment integration.
 
-### Monitoring — VM 101
+### Blog — Debian (VM 107)
+Ghost instance at [yeghiasargis.com](https://yeghiasargis.com). Canonical home for the *Built and Written* weekly; Substack used for syndication only.
 
-Prometheus + Grafana stack. Scrapes metrics from all VMs via node-exporter.
-
-**Grafana dashboard:** Node Exporter Full (ID 1860)
-
-**Alert rules:**
-
-* High Disk — usage > 90%
-* High RAM — usage > 95%
-* High CPU — usage > 95%
-* Host Down — `up == 0`
-
-Alerts delivered via SMTP.
-
----
-
-### Nginx Reverse Proxy — VM 102 (`10.0.0.251`)
-
-Nginx with Certbot SSL termination. Routes all external HTTPS traffic to internal services.
-
-**Proxied services (armstream.stream subdomains):**
-
-* `photos.armstream.stream` → Immich
-* `onlyoffice.armstream.stream` → OnlyOffice document server
-* `chat.armstream.stream` → Stoat
-* `navidrome.armstream.stream` → Navidrome
-* `calibre.armstream.stream` → Calibre-Web
-* `jellyfin.armstream.stream` → Jellyfin
-
-**Proxied services (external domains):**
-
-* `yeghiasargis.com` → Ghost (VM 107)
-* `hyetechnology.org` → DokuWiki (VM 105)
-* `nairicafe.com` → e-commerce (VM 106)
-
----
-
-### Community — VM 103 (`10.0.0.160`)
-
-Self-hosted community infrastructure for the Armenian tech community (armstream.stream).
-
-* **Stoat** (rebranded Revolt) — self-hosted chat at `chat.armstream.stream`
-* **LiveKit** — voice/video conferencing backend for Stoat
-* **Mumble** — low-latency voice server
-* **Mumble music bot** — custom Python bot (pymumble + yt-dlp + ffmpeg)
-
----
-
-### open.mp GTA:SA Server — VM 104 (`10.0.0.161`)
-
-open.mp (SA-MP successor) game server running a custom RPG gamemode.
-
-* MySQL backend for persistent player data
-* Account system (register/login)
-* Class selection
-* Economy commands
-
----
-
-### DokuWiki — VM 105 (`10.0.0.162`)
-
-[hyetechnology.org](https://hyetechnology.org) — an Armenian tech community knowledge base and wiki. Provisioned via Terraform.
-
----
-
-### Nairi Café — VM 106 (`10.0.0.163`)
-
-[nairicafe.com](https://nairicafe.com) — e-commerce storefront. Provisioned via Terraform.
-
----
-
-### Ghost — VM 107 (`10.0.0.164`)
-
-[yeghiasargis.com](https://yeghiasargis.com) — personal blog covering self-hosted infrastructure, Linux, and humanistic essays. Provisioned via Terraform.
+### Git — Debian (VM 108)
+Self-hosted [Gitea](https://git.armstream.stream) instance at `git.armstream.stream` (SSH on port 2222). Primary remote for personal repositories, with Obsidian vault sync via Tailscale + HTTPS using a Gitea access token in `~/.netrc`.
 
 ---
 
 ## Infrastructure as Code
 
-All VMs are defined in Terraform using the **bpg/proxmox** provider.
+All VMs are provisioned via **Terraform** using the `bpg/proxmox` provider. Remote state is stored in a **MinIO S3 bucket** on TrueNAS, keeping state off local disk and enabling consistent provisioning.
 
-* Remote state stored in **MinIO S3** on TrueNAS (`tank`)
-* Secrets passed via environment variables (`TF_VAR_*`) — never committed
-* `.tfvars` and credential files excluded via `.gitignore`
-
----
-
-## Roadmap
-
-* Hardware upgrade — Ryzen 5600G + B550 Mini-ITX + 32GB DDR4
+```
+homelab/
+└── terraform/
+    ├── main.tf
+    ├── variables.tf
+    └── ...
+```
 
 ---
 
-## Related
+## Networking
 
-* [NixOS config](https://github.com/yeghia-s/nixos-config)
-* [Neovim config](https://github.com/yeghia-s/nvim-config)
+- **Router:** TP-Link ER707-M2 (gateway `10.0.0.2`)
+- **Wi-Fi:** TP-Link EAP670 AP (Omada controller)
+- **DNS:** Cloudflare, with a DDNS script maintaining current IP
+- **VPN:** Tailscale across all nodes for secure remote access
+- **Backups:** rclone to Google Drive, Dropbox, and Cloudflare R2
+- **CalDAV:** Baïkal at `calendar.armstream.stream` (self-hosted, synced via DAVx5)
+
+---
+
+## Desktop
+
+Daily driver is a Fedora workstation running **Hyprland** (Wayland compositor) via UWSM, with Waybar, Wofi, dunst, hyprlock, and hypridle. Login managed by greetd + tuigreet (replacing GDM). A parallel **NixOS** configuration ([nixos-config](https://github.com/yeghia-s/nixos-config)) maintains the same Hyprland setup declaratively, with Home Manager, flakes, sops-nix, four-layout keyboard (us/ca/de/am phonetic), Syncthing, Steam/Proton-GE, goodix-550a fingerprint driver, and TLP with 20/80 charge thresholds.
+
+---
+
+## Related Repositories
+
+- [nixos-config](https://github.com/yeghia-s/nixos-config) — declarative NixOS + Hyprland configuration
+- [nvim-config](https://github.com/yeghia-s/nvim-config) — portable Neovim config with lazy.nvim + Mason
+- [mumblebot](https://github.com/yeghia-s/mumblebot) — Python Mumble music bot
+- [omp-rpg](https://github.com/yeghia-s/omp-rpg) — GTA:SA open.mp RPG server
