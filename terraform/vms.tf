@@ -311,68 +311,6 @@ resource "proxmox_virtual_environment_vm" "dokuwiki" {
   }
 }
 
-resource "proxmox_virtual_environment_vm" "nairicafe" {
-  name      = "nairicafe"
-  node_name = "proxmox"
-  vm_id     = 106
-  started   = true
-  on_boot   = true
-
-  clone {
-    vm_id = 9000
-    full  = true
-  }
-
-  cpu {
-    cores   = 2
-    sockets = 1
-    type    = "x86-64-v2-AES"
-  }
-
-  memory {
-    dedicated = 2048
-  }
-
-  disk {
-    datastore_id = "local-lvm"
-    interface    = "scsi0"
-    size         = 20 
-  }
-
-  network_device {
-    bridge = "vmbr0"
-    model  = "virtio"
-  }
-
-  initialization {
-    ip_config {
-      ipv4 {
-        address = "10.0.0.163/24"
-        gateway = "10.0.0.2"
-      }
-    }
-    dns {
-      servers = ["1.1.1.1", "8.8.8.8"]
-    }
-    user_account {
-      username = "yeghia"
-      keys     = var.ssh_public_keys
-    }
-  }
-
-  operating_system {
-    type = "l26"
-  }
-
-  agent {
-    enabled = true
-  }
-
-  lifecycle {
-    ignore_changes = [disk, cdrom]
-  }
-}
-
 resource "proxmox_virtual_environment_vm" "ghost" {
   name      = "ghost"
   node_name = "proxmox"
@@ -472,6 +410,68 @@ resource "proxmox_virtual_environment_vm" "gitea" {
     ip_config {
       ipv4 {
         address = "10.0.0.165/24"
+        gateway = "10.0.0.2"
+      }
+    }
+    dns {
+      servers = ["1.1.1.1", "8.8.8.8"]
+    }
+    user_account {
+      username = "yeghia"
+      keys     = var.ssh_public_keys
+    }
+  }
+
+  operating_system {
+    type = "l26"
+  }
+
+  agent {
+    enabled = true
+  }
+
+  lifecycle {
+    ignore_changes = [disk, cdrom]
+  }
+}
+
+resource "proxmox_virtual_environment_vm" "valheim" {
+  name      = "valheim"
+  node_name = "proxmox"
+  vm_id     = 109
+  started   = true
+  on_boot   = true
+
+  clone {
+    vm_id = 9000
+    full  = true
+  }
+
+  cpu {
+    cores   = 2
+    sockets = 1
+    type    = "x86-64-v2-AES"
+  }
+
+  memory {
+    dedicated = 6144
+  }
+
+  disk {
+    datastore_id = "local-lvm"
+    interface    = "scsi0"
+    size         = 20
+  }
+
+  network_device {
+    bridge = "vmbr0"
+    model  = "virtio"
+  }
+
+  initialization {
+    ip_config {
+      ipv4 {
+        address = "10.0.0.166/24"
         gateway = "10.0.0.2"
       }
     }
