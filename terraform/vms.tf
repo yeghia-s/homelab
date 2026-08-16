@@ -315,3 +315,75 @@ resource "proxmox_virtual_environment_vm" "ghost" {
   }
 }
 
+resource "proxmox_virtual_environment_container" "postgresql" {
+  node_name    = "proxmox"
+  vm_id        = 104                   
+  description  = "PostgreSQL database server"
+
+  unprivileged = true
+
+  cpu {
+    cores = 2
+  }
+
+  memory {
+    dedicated = 2048
+    swap      = 512
+  }
+
+  disk {
+    datastore_id = "local-lvm"  
+    size         = 16
+  }
+
+  network_interface {
+    name   = "eth0"
+    bridge = "vmbr0"             
+  }
+
+  initialization {
+    hostname = "postgresql"
+
+    dns {
+      servers = ["1.1.1.1", "8.8.8.8"]
+    }
+
+    ip_config {
+      ipv4 {
+        address = "10.0.0.161/24" 
+        gateway = "10.0.0.2"
+      }
+    }
+
+    user_account {
+      keys = [trimspace(file("~/.ssh/id_ed25519.pub"))]
+    }
+  }
+
+  operating_system {
+    template_file_id = "local:vztmpl/debian-12-standard_12.12-1_amd64.tar.zst"
+    type             = "debian"
+  }
+
+  features {
+    nesting = true
+  }
+
+  tags = ["database", "terraform"]
+}
+
+locals {
+  proxmox_host = regex("^https?://([^:/]+)", var.proxmox_endpoint)[0]
+}
+
+resource "null_resource" "postgresql_pgdata_mount" {
+  depends_on = [proxmox_virtual_environment_container.postgresql]
+
+  triggers = {
+    vm_id = proxmox_virtual_environment_container.postgresql.vm_id
+  }
+
+  provisioner "local-exec" {
+    command = "ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new root@${local.proxmox_host} 'pct set ${proxmox_virtual_environment_container.postgresql.vm_id} -mp0 truenas-pgdata:16,mp=/var/lib/postgresql && pct reboot ${proxmox_virtual_environment_container.postgresql.vm_id}'"
+  }
+}
