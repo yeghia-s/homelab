@@ -343,7 +343,7 @@ resource "proxmox_virtual_environment_container" "postgresql" {
   }
 
   mount_point {
-    volume = "truenas-pgdata:104/vm-104-disk-0.raw"
+    volume = "truenas-pgdata"
     path   = "/var/lib/postgresql"
     size   = "16G"
   }
@@ -368,7 +368,7 @@ resource "proxmox_virtual_environment_container" "postgresql" {
     }
 
     user_account {
-      keys = [trimspace(file("~/.ssh/id_ed25519.pub"))]
+      keys = var.ssh_public_keys
     }
   }
 
