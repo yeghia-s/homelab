@@ -57,10 +57,6 @@ resource "proxmox_virtual_environment_vm" "monitoring" {
   on_boot       = true
   scsi_hardware = "virtio-scsi-single"
 
-  lifecycle {
-    ignore_changes = [disk]
-  }
-
   operating_system {
     type = "l26"
   }
@@ -101,10 +97,6 @@ resource "proxmox_virtual_environment_vm" "nginx" {
   started       = true
   on_boot       = true
   scsi_hardware = "virtio-scsi-single"
-
-  lifecycle {
-    ignore_changes = [disk]
-  }
 
   operating_system {
     type = "l26"
@@ -255,7 +247,7 @@ resource "proxmox_virtual_environment_vm" "dokuwiki" {
   }
 
   lifecycle {
-    ignore_changes = [disk, cdrom]
+    ignore_changes = [cdrom]
   }
 }
 
@@ -284,7 +276,7 @@ resource "proxmox_virtual_environment_vm" "ghost" {
   disk {
     datastore_id = "local-lvm"
     interface    = "scsi0"
-    size         = 10 
+    size         = 20 
   }
 
   network_device {
@@ -317,7 +309,7 @@ resource "proxmox_virtual_environment_vm" "ghost" {
   }
 
   lifecycle {
-    ignore_changes = [disk, cdrom]
+    ignore_changes = [cdrom]
   }
 }
 
