@@ -341,8 +341,9 @@ resource "proxmox_virtual_environment_container" "postgresql" {
   }
 
   network_interface {
-    name   = "eth0"
-    bridge = "vmbr0"             
+    name     = "eth0"
+    bridge   = "vmbr0"
+    firewall = false
   }
 
   initialization {
@@ -360,7 +361,7 @@ resource "proxmox_virtual_environment_container" "postgresql" {
     }
 
     user_account {
-      keys = var.ssh_public_keys
+      keys     = var.ssh_public_keys
     }
   }
 
