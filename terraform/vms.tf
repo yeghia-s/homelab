@@ -41,6 +41,12 @@ resource "proxmox_virtual_environment_vm" "truenas" {
   agent {
     enabled = true
   }
+
+  startup {
+    order      = 1
+    up_delay   = 10
+    down_delay = -1
+  }
 }
 
 resource "proxmox_virtual_environment_vm" "monitoring" {
@@ -336,6 +342,12 @@ resource "proxmox_virtual_environment_container" "postgresql" {
     size         = 16
   }
 
+  mount_point {
+    volume = "truenas-pgdata:104/vm-104-disk-0.raw"
+    path   = "/var/lib/postgresql"
+    size   = "16G"
+  }
+
   network_interface {
     name   = "eth0"
     bridge = "vmbr0"             
@@ -369,21 +381,12 @@ resource "proxmox_virtual_environment_container" "postgresql" {
     nesting = true
   }
 
+  startup {
+    order      = 2
+    up_delay   = 60
+    down_delay = -1
+  }
+
   tags = ["database", "terraform"]
 }
 
-locals {
-  proxmox_host = regex("^https?://([^:/]+)", var.proxmox_endpoint)[0]
-}
-
-resource "null_resource" "postgresql_pgdata_mount" {
-  depends_on = [proxmox_virtual_environment_container.postgresql]
-
-  triggers = {
-    vm_id = proxmox_virtual_environment_container.postgresql.vm_id
-  }
-
-  provisioner "local-exec" {
-    command = "ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new root@${local.proxmox_host} 'pct set ${proxmox_virtual_environment_container.postgresql.vm_id} -mp0 truenas-pgdata:16,mp=/var/lib/postgresql && pct reboot ${proxmox_virtual_environment_container.postgresql.vm_id}'"
-  }
-}
