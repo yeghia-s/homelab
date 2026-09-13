@@ -383,3 +383,66 @@ resource "proxmox_virtual_environment_container" "postgresql" {
   tags = ["database", "terraform"]
 }
 
+resource "proxmox_virtual_environment_vm" "gentoo" {
+  name         = "gentoo"
+  node_name    = "proxmox"
+  vm_id        = 106                   
+  started       = true
+  on_boot       = true
+  scsi_hardware = "virtio-scsi-single"
+
+  operating_system {
+    type = "l26"
+  }
+
+  cpu {
+    cores   = 4
+    sockets = 1
+    type    = "x86-64-v2-AES"
+  }
+
+  memory {
+    dedicated = 4096
+  }
+
+  disk {
+    datastore_id = "local-lvm"  
+    size         = 20
+    interface    = "scsi0"
+    iothread     = true
+  }
+
+  network_device {
+    bridge      = "vmbr0"
+    model       = "virtio"
+    firewall    = true
+  }
+
+  agent {
+    enabled = true
+  }
+
+  initialization {
+    dns {
+      servers = ["1.1.1.1", "8.8.8.8"]
+    }
+
+    ip_config {
+      ipv4 {
+        address = "10.0.0.163/24" 
+        gateway = "10.0.0.2"
+      }
+    }
+
+    user_account {
+      username = "yeghia"
+      keys = var.ssh_public_keys
+    }
+  }
+
+    cdrom {
+      file_id = "local:iso/install-amd64-minimal-20260906T170102Z.iso"
+    }
+
+}
+
