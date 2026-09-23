@@ -73,7 +73,7 @@ resource "proxmox_virtual_environment_vm" "monitoring" {
 
   disk {
     datastore_id = "local-lvm"
-    size         = 32
+    size         = 48
     interface    = "scsi0"
     iothread     = true
   }
@@ -419,7 +419,7 @@ resource "proxmox_virtual_environment_vm" "gentoo" {
   }
 
   agent {
-    enabled = true
+    enabled = false
   }
 
   initialization {
