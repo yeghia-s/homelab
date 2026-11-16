@@ -76,6 +76,8 @@ resource "proxmox_virtual_environment_vm" "monitoring" {
     size         = 48
     interface    = "scsi0"
     iothread     = true
+    discard      = "on"
+    ssd          = true
   }
 
   network_device {
@@ -117,6 +119,8 @@ resource "proxmox_virtual_environment_vm" "nginx" {
     size         = 16
     interface    = "scsi0"
     iothread     = true
+    discard      = "on"
+    ssd          = true
   }
 
   network_device {
@@ -157,6 +161,8 @@ resource "proxmox_virtual_environment_vm" "community_vm" {
     datastore_id = "local-lvm"
     interface    = "scsi0"
     size         = 32
+    discard      = "on"
+    ssd          = true
   }
 
   network_device {
@@ -187,6 +193,10 @@ resource "proxmox_virtual_environment_vm" "community_vm" {
   agent {
     enabled = true
   }
+
+  lifecycle {
+  ignore_changes = [initialization[0].user_account[0].keys]
+}
 }
 
 resource "proxmox_virtual_environment_vm" "dokuwiki" {
@@ -215,6 +225,8 @@ resource "proxmox_virtual_environment_vm" "dokuwiki" {
     datastore_id = "local-lvm"
     interface    = "scsi0"
     size         = 8
+    discard      = "on"
+    ssd          = true
   }
 
   network_device {
@@ -247,8 +259,11 @@ resource "proxmox_virtual_environment_vm" "dokuwiki" {
   }
 
   lifecycle {
-    ignore_changes = [cdrom]
-  }
+  ignore_changes = [
+    cdrom,
+    initialization[0].user_account[0].keys,
+  ]
+}
 }
 
 resource "proxmox_virtual_environment_vm" "ghost" {
@@ -277,6 +292,8 @@ resource "proxmox_virtual_environment_vm" "ghost" {
     datastore_id = "local-lvm"
     interface    = "scsi0"
     size         = 20 
+    discard      = "on"
+    ssd          = true
   }
 
   network_device {
@@ -309,84 +326,17 @@ resource "proxmox_virtual_environment_vm" "ghost" {
   }
 
   lifecycle {
-    ignore_changes = [cdrom]
-  }
+  ignore_changes = [
+    cdrom,
+    initialization[0].user_account[0].keys,
+  ]
 }
-
-resource "proxmox_virtual_environment_container" "postgresql" {
-  node_name    = "proxmox"
-  vm_id        = 104                   
-  description  = "PostgreSQL database server"
-
-  unprivileged = true
-
-  cpu {
-    cores = 2
-  }
-
-  memory {
-    dedicated = 2048
-    swap      = 512
-  }
-
-  disk {
-    datastore_id = "local-lvm"  
-    size         = 16
-  }
-
-  mount_point {
-    volume = "truenas-pgdata"
-    path   = "/var/lib/postgresql"
-    size   = "16G"
-  }
-
-  network_interface {
-    name     = "eth0"
-    bridge   = "vmbr0"
-    firewall = false
-  }
-
-  initialization {
-    hostname = "postgresql"
-
-    dns {
-      servers = ["1.1.1.1", "8.8.8.8"]
-    }
-
-    ip_config {
-      ipv4 {
-        address = "10.0.0.161/24" 
-        gateway = "10.0.0.2"
-      }
-    }
-
-    user_account {
-      keys     = var.ssh_public_keys
-    }
-  }
-
-  operating_system {
-    template_file_id = "local:vztmpl/debian-12-standard_12.12-1_amd64.tar.zst"
-    type             = "debian"
-  }
-
-  features {
-    nesting = true
-  }
-
-  startup {
-    order      = 2
-    up_delay   = 60
-    down_delay = -1
-  }
-
-  tags = ["database", "terraform"]
 }
 
 resource "proxmox_virtual_environment_vm" "gentoo" {
   name         = "gentoo"
   node_name    = "proxmox"
-  vm_id        = 106                   
+  vm_id        = 106          
   started       = true
   on_boot       = true
   scsi_hardware = "virtio-scsi-single"
@@ -444,5 +394,62 @@ resource "proxmox_virtual_environment_vm" "gentoo" {
       file_id = "local:iso/install-amd64-minimal-20260906T170102Z.iso"
     }
 
+    lifecycle {
+  ignore_changes = [initialization[0].user_account[0].keys]
 }
 
+}
+
+resource "proxmox_virtual_environment_vm" "winserver" {
+  name          = "winserver"
+  node_name     = "proxmox"
+  vm_id         = 108
+  started       = false
+  on_boot       = false
+  bios          = "ovmf"
+  machine       = "q35"
+  scsi_hardware = "virtio-scsi-single"
+  tags          = ["terraform", "windows"]
+
+  operating_system {
+    type = "win11"
+  }
+
+  agent { enabled = true }
+
+  cpu {
+    cores = 2
+    type  = "host"
+  }
+
+  memory { dedicated = 4096 }
+
+  efi_disk {
+    datastore_id = "local-lvm"
+    type         = "4m"
+  }
+
+  tpm_state {
+    datastore_id = "local-lvm"
+    version      = "v2.0"
+  }
+
+  disk {
+    datastore_id = "local-lvm"
+    interface    = "scsi0"
+    size         = 40
+    iothread     = true
+    discard      = "on"
+    ssd          = true
+  }
+
+  cdrom {
+    file_id   = "local:iso/26100.32230.260111-0550.lt_release_svc_refresh_SERVER_EVAL_x64FRE_en-us.iso"
+    interface = "ide0"
+  }
+
+  network_device {
+    bridge = "vmbr0"
+    model  = "virtio"
+  }
+}
